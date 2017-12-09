@@ -1,5 +1,5 @@
 ﻿
-namespace JimLess
+namespace Douxt
 {
     public enum Command
     {

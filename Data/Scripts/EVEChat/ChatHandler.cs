@@ -1,28 +1,30 @@
-﻿using Sandbox.ModAPI;
+﻿using Sandbox.Game;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VRage.Game;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace JimLess
+namespace Douxt
 {
     public class ChatHandler
     {
         #region TextConstants
-        private static readonly string BSHELP = @"/bs help [1-11] - 显示此页面或变量的解释
-/bs config  - 显示当前设置
-管理员命令:
-/bs on/off - 启用/禁用这个mod
-/bs debug - 启用/禁用此调试
-/bs set number/name value - 设置变量,你可以使用数字和开/关,true / false
-/bs find/list/add/rem/clear/buildon - 查找,列出,添加,删除,清除并覆盖建立为坚不可摧的网格
-例子:
- /bs set 1 1 or /bs set DelayBeforeTurningOn 1
- /bs add Platform 3534 or /bs find 100 and /bs add
+        private static readonly string EVEHELP = @"欢迎!请加QQ群：116381172  以便和大家一起玩！
 
-@ 2015 JimLess 
+本服务器的基本玩法：
+1.获取资源：只要在线玩家背包就会发放少量小凡币。资源点信标处会产生大量小凡币，而且在线人数越多，产生速度越快。
+
+2.建造船只：用小凡币在黑店购买组件，即可建造船只，推荐在隐蔽的小行星建造自己的基地!
+
+3.搞事情：直接用日不完重生船或者自己造的船出去搞事情或者约战，请自行发挥！
+
+
+PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组件建造自己的黑店。
 ";
         private static readonly string BSHELP_CHAT = @"/bs help [1-10], /bs config, /bs set number/name value,  /bs on/off, /bs debug, /bs list/find/add/rem/clear/buildon";
         private static readonly List<string> BSHELP_VARIABLES = new List<string>() {
@@ -44,13 +46,13 @@ namespace JimLess
         public static void ChatMessageEntered(string messageText, ref bool sendToOthers)
         {
             Logger.Log.Debug("ChatEvents.ChatMessageEntered: {0}", messageText);
-            if (messageText.StartsWith("/bs", StringComparison.OrdinalIgnoreCase))
+            if (messageText.StartsWith("/eve", StringComparison.OrdinalIgnoreCase))
             {
-                if (messageText.Length == 3)
+                if (messageText.Length == 4)
                 {
-                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("安全信标是 {0}. {1} 当前版本: {2}", (Core.Settings.Enabled) ? "On" : "Off", (Core.Settings.OnlyForStations) ? "只为站点." : "", SyncPacket.Version));
+                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("欢迎来到EVE服务器！输入/eve help获取帮助。"));
                 }
-                string[] commands = (messageText.Remove(0, 3)).Split(null as string[], 2, StringSplitOptions.RemoveEmptyEntries);
+                string[] commands = (messageText.Remove(0, 4)).Split(null as string[], 2, StringSplitOptions.RemoveEmptyEntries);
                 if (commands.Length > 0)
                 {
                     string internalCommand = commands[0];
@@ -65,8 +67,8 @@ namespace JimLess
                         catch { }
                         if (index < 1 || index > 10)
                         {
-                            MyAPIGateway.Utilities.ShowMissionScreen("Help", "Beacon ", "Security", BSHELP);
-                            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, BSHELP_CHAT);
+                            MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP);
+                            //MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, BSHELP_CHAT);
                         }
                         else
                         {
@@ -77,6 +79,66 @@ namespace JimLess
                     }
                     else if (Core.Settings != null)
                     {
+
+                        if (internalCommand.Equals("redeem", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var index = 0;
+
+                            if (arguments.Length == 0) {
+                                return;
+                            }
+
+                            string t = arguments.Replace("-", "");
+                            byte[] data2 = Base24Encoding.Default.GetBytes(t);
+                            String str = System.Text.Encoding.ASCII.GetString(data2);
+                            str = str.TrimStart('\0');
+
+                            string[] msgs = str.Split(":", StringSplitOptions.RemoveEmptyEntries);
+                            if (msgs.Length != 3) {
+                                return;
+                            }
+
+                            string type = msgs[0];
+                            if (type.Equals("Coin", StringComparison.OrdinalIgnoreCase)) {
+                                var num = 0;
+                                try { num = Int32.Parse(msgs[1]); } catch { }
+
+                                if (num == 0)
+                                {
+                                    return;
+                                }
+                                MyEntity entity = MyAPIGateway.Session.Player.Character.Entity as MyEntity;
+                                if (entity.HasInventory)
+                                {
+                                    MyInventory inventory = entity.GetInventoryBase() as MyInventory;
+                                    
+                                    inventory.AddItems(num, new MyObjectBuilder_Ingot { SubtypeName = "Coin" });
+                                    //if (!inventory.ContainItems(100000, new MyObjectBuilder_Ingot { SubtypeName = "Iron" }))
+                                    //{
+                                    //    inventory.AddItems(index, new MyObjectBuilder_Ingot { SubtypeName = "Iron" });
+                                    //    //terminalBlock.RefreshCustomInfo();
+                                    //}
+                                }
+                            }
+
+                            //if (index > 0)
+                            //{
+                            //    MyEntity entity = MyAPIGateway.Session.Player.Character.Entity as MyEntity;
+                            //    if (entity.HasInventory)
+                            //    {
+                            //        MyInventory inventory = entity.GetInventoryBase() as MyInventory;
+
+                            //        if (!inventory.ContainItems(100000, new MyObjectBuilder_Ingot { SubtypeName = "Iron" }))
+                            //        {
+                            //            inventory.AddItems(index, new MyObjectBuilder_Ingot { SubtypeName = "Iron" });
+                            //            //terminalBlock.RefreshCustomInfo();
+                            //        }
+                            //    }
+
+
+                            //}
+
+                        }
 
                         if (internalCommand.Equals("config", StringComparison.OrdinalIgnoreCase))
                         {

@@ -10,13 +10,13 @@ using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 
-namespace JimLess
+namespace Douxt
 {
 
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class Core : MySessionComponentBase
     {
-        public static readonly string MODSAY = "BS";
+        public static readonly string MODSAY = "EVE";
 
         public static Settings Settings { get; private set; }
         internal static void setSettings(Settings settings) { Settings = settings; Flush(); }
@@ -43,7 +43,7 @@ namespace JimLess
 
             Database.Instance.Init();
 
-            MyAPIGateway.Session.DamageSystem.RegisterBeforeDamageHandler(0, DamageHandler.BeforeDamageHandler);
+            //MyAPIGateway.Session.DamageSystem.RegisterBeforeDamageHandler(0, DamageHandler.BeforeDamageHandler);
 
             // if custom blocks exists, overriding...
             try
@@ -134,148 +134,148 @@ namespace JimLess
                 if (!IsServer)  // if client exit at this point. Cleaning works only on server side.
                     return;
 
-                if (Frame++ % 10 == 0)
-                {
-                    HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
-                    MyAPIGateway.Entities.GetEntities(entities, x => x is IMyCubeGrid);
-                    foreach (IMyEntity entity in entities)
-                    {
-                        IMyCubeGrid grid = entity as IMyCubeGrid;
-                        if (grid == null)
-                            continue;
+                //if (Frame++ % 10 == 0)
+                //{
+                //    HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
+                //    MyAPIGateway.Entities.GetEntities(entities, x => x is IMyCubeGrid);
+                //    foreach (IMyEntity entity in entities)
+                //    {
+                //        IMyCubeGrid grid = entity as IMyCubeGrid;
+                //        if (grid == null)
+                //            continue;
 
-                        // if this grid have an active BS, then turn off destructible for grid
-                        gridDestructible(grid, !isActiveBeaconSecurity(grid));
+                //        // if this grid have an active BS, then turn off destructible for grid
+                //        gridDestructible(grid, !isActiveBeaconSecurity(grid));
 
-                        if (!eventedGrids.Contains(grid))
-                        { // skip if already added actions
-                            grid.OnBlockAdded += BuildHandler.grid_OnBlockAdded;
-                            eventedGrids.Add(grid);
-                            Logger.Log.Debug("OnBlockAdded event added to {0} grids.", grid.EntityId);
-                        }
-                    }
+                //        if (!eventedGrids.Contains(grid))
+                //        { // skip if already added actions
+                //            grid.OnBlockAdded += BuildHandler.grid_OnBlockAdded;
+                //            eventedGrids.Add(grid);
+                //            Logger.Log.Debug("OnBlockAdded event added to {0} grids.", grid.EntityId);
+                //        }
+                //    }
 
-                    // Remove block from queues
-                    foreach (var block in queueRemoveBlocks)
-                    {
-                        IMyCubeGrid grid = block.CubeGrid as IMyCubeGrid;
-                        if (grid == null)
-                            continue;
-                        grid.RemoveBlock(block, true);
-                        if (block.FatBlock != null)
-                            block.FatBlock.Close();
-                    }
-                    queueRemoveBlocks.Clear();
-                }
+                //    // Remove block from queues
+                //    foreach (var block in queueRemoveBlocks)
+                //    {
+                //        IMyCubeGrid grid = block.CubeGrid as IMyCubeGrid;
+                //        if (grid == null)
+                //            continue;
+                //        grid.RemoveBlock(block, true);
+                //        if (block.FatBlock != null)
+                //            block.FatBlock.Close();
+                //    }
+                //    queueRemoveBlocks.Clear();
+                //}
 
-                if (Settings.CleaningFrequency == 0)
-                    return;
-                #region Cleanup
-                if ((DateTime.Now - m_cleaning).TotalSeconds > Settings.CleaningFrequency) // Cleaning by frequency
-                {
-                    Logger.Log.Debug("Time for cleaning, from last {0} secs elapsed.", (DateTime.Now - m_cleaning).TotalSeconds);
-                    m_cleaning = DateTime.Now;
-                    HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
-                    MyAPIGateway.Entities.GetEntities(entities, x => x is IMyCubeGrid);
+                //if (Settings.CleaningFrequency == 0)
+                //    return;
+                //#region Cleanup
+                //if ((DateTime.Now - m_cleaning).TotalSeconds > Settings.CleaningFrequency) // Cleaning by frequency
+                //{
+                //    Logger.Log.Debug("Time for cleaning, from last {0} secs elapsed.", (DateTime.Now - m_cleaning).TotalSeconds);
+                //    m_cleaning = DateTime.Now;
+                //    HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
+                //    MyAPIGateway.Entities.GetEntities(entities, x => x is IMyCubeGrid);
 
-                    int removed = 0;
-                    List<IMySlimBlock> ToRemove = new List<IMySlimBlock>();
+                //    int removed = 0;
+                //    List<IMySlimBlock> ToRemove = new List<IMySlimBlock>();
 
-                    HashSet<long> AlreadyCounted = new HashSet<long>();
-                    Dictionary<long, long[]> PerFactionCount = new Dictionary<long, long[]>();
-                    Dictionary<long, long[]> PerPlayerCount = new Dictionary<long, long[]>();
+                //    HashSet<long> AlreadyCounted = new HashSet<long>();
+                //    Dictionary<long, long[]> PerFactionCount = new Dictionary<long, long[]>();
+                //    Dictionary<long, long[]> PerPlayerCount = new Dictionary<long, long[]>();
 
-                    foreach (IMyCubeGrid grid in entities)
-                    {
-                        var blocks = new List<IMySlimBlock>();
-                        grid.GetBlocks(blocks, x => x.FatBlock != null);
-                        foreach (IMySlimBlock block in blocks)
-                        {
-                            //Logger.Log.Debug("Check block {0} {1}", block.FatBlock.DisplayNameText, block.FatBlock.ToString());
-                            BeaconSecurity bs = block.FatBlock.GameLogic as BeaconSecurity;
-                            if (bs == null || !bs.IsBeaconSecurity || bs.OwnerId == 0)
-                                continue;
+                //    foreach (IMyCubeGrid grid in entities)
+                //    {
+                //        var blocks = new List<IMySlimBlock>();
+                //        grid.GetBlocks(blocks, x => x.FatBlock != null);
+                //        foreach (IMySlimBlock block in blocks)
+                //        {
+                //            //Logger.Log.Debug("Check block {0} {1}", block.FatBlock.DisplayNameText, block.FatBlock.ToString());
+                //            BeaconSecurity bs = block.FatBlock.GameLogic as BeaconSecurity;
+                //            if (bs == null || !bs.IsBeaconSecurity || bs.OwnerId == 0)
+                //                continue;
 
-                            if (!AlreadyCounted.Contains(block.FatBlock.EntityId))
-                                AlreadyCounted.Add(block.FatBlock.EntityId);
-                            else
-                                continue;
+                //            if (!AlreadyCounted.Contains(block.FatBlock.EntityId))
+                //                AlreadyCounted.Add(block.FatBlock.EntityId);
+                //            else
+                //                continue;
 
-                            // Priority for players limit.
+                //            // Priority for players limit.
 
-                            if (!PerPlayerCount.ContainsKey(bs.OwnerId)) // if there no counts, add it
-                                PerPlayerCount[bs.OwnerId] = new long[] { 0, 0 };
-                            PerPlayerCount[bs.OwnerId][0]++;
-                            if (bs.OwnerId != 0 && PerPlayerCount[bs.OwnerId][0] > Settings.LimitPerPlayer)
-                            {
-                                PerPlayerCount[bs.OwnerId][1]++;
-                                ToRemove.Add(block);
-                                continue;
-                            }
+                //            if (!PerPlayerCount.ContainsKey(bs.OwnerId)) // if there no counts, add it
+                //                PerPlayerCount[bs.OwnerId] = new long[] { 0, 0 };
+                //            PerPlayerCount[bs.OwnerId][0]++;
+                //            if (bs.OwnerId != 0 && PerPlayerCount[bs.OwnerId][0] > Settings.LimitPerPlayer)
+                //            {
+                //                PerPlayerCount[bs.OwnerId][1]++;
+                //                ToRemove.Add(block);
+                //                continue;
+                //            }
 
-                            IMyFaction faction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(bs.OwnerId);
-                            if (faction != null)
-                            {
-                                if (!PerFactionCount.ContainsKey(faction.FactionId))
-                                    PerFactionCount[faction.FactionId] = new long[] { 0, 0 };
-                                PerFactionCount[faction.FactionId][0]++;
+                //            IMyFaction faction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(bs.OwnerId);
+                //            if (faction != null)
+                //            {
+                //                if (!PerFactionCount.ContainsKey(faction.FactionId))
+                //                    PerFactionCount[faction.FactionId] = new long[] { 0, 0 };
+                //                PerFactionCount[faction.FactionId][0]++;
 
-                                if (PerFactionCount[faction.FactionId][0] > Settings.LimitPerFaction)
-                                {
-                                    PerFactionCount[faction.FactionId][1]++;
-                                    ToRemove.Add(block);
-                                }
-                            }
-                        }
-                        foreach (IMySlimBlock block in ToRemove)
-                            grid.RemoveBlock(block, true);
-                        removed += ToRemove.Count;
-                        ToRemove.Clear();
-                    }
+                //                if (PerFactionCount[faction.FactionId][0] > Settings.LimitPerFaction)
+                //                {
+                //                    PerFactionCount[faction.FactionId][1]++;
+                //                    ToRemove.Add(block);
+                //                }
+                //            }
+                //        }
+                //        foreach (IMySlimBlock block in ToRemove)
+                //            grid.RemoveBlock(block, true);
+                //        removed += ToRemove.Count;
+                //        ToRemove.Clear();
+                //    }
 
-                    List<IMyPlayer> players = new List<IMyPlayer>();
-                    MyAPIGateway.Players.GetPlayers(players);
+                //    List<IMyPlayer> players = new List<IMyPlayer>();
+                //    MyAPIGateway.Players.GetPlayers(players);
 
-                    // Send warn message about cleaning and restrictions!
-                    foreach (long ownerId in PerPlayerCount.Keys)
-                    {
-                        if (ownerId == 0 || PerPlayerCount[ownerId][1] == 0)
-                            continue;
-                        IMyPlayer player = players.FirstOrDefault(x => x.IdentityId == ownerId);
-                        if (player == null)
-                            continue;
-                        SyncPacket pckOut = new SyncPacket();
-                        pckOut.proto = SyncPacket.Version;
-                        pckOut.command = (ushort)Command.MessageToChat;
-                        pckOut.message = string.Format("Removed {0} entity as a result of limitations on the amount {1} per player.", PerPlayerCount[ownerId][1], Settings.LimitPerPlayer);
-                        Core.SendMessage(pckOut, player.SteamUserId);
-                    }
+                //    // Send warn message about cleaning and restrictions!
+                //    foreach (long ownerId in PerPlayerCount.Keys)
+                //    {
+                //        if (ownerId == 0 || PerPlayerCount[ownerId][1] == 0)
+                //            continue;
+                //        IMyPlayer player = players.FirstOrDefault(x => x.IdentityId == ownerId);
+                //        if (player == null)
+                //            continue;
+                //        SyncPacket pckOut = new SyncPacket();
+                //        pckOut.proto = SyncPacket.Version;
+                //        pckOut.command = (ushort)Command.MessageToChat;
+                //        pckOut.message = string.Format("Removed {0} entity as a result of limitations on the amount {1} per player.", PerPlayerCount[ownerId][1], Settings.LimitPerPlayer);
+                //        Core.SendMessage(pckOut, player.SteamUserId);
+                //    }
 
-                    foreach (long factionId in PerFactionCount.Keys)
-                    {
-                        if (PerFactionCount[factionId][1] == 0)
-                            continue;
-                        IMyFaction faction = MyAPIGateway.Session.Factions.TryGetFactionById(factionId);
-                        if (faction == null)
-                            continue;
+                //    foreach (long factionId in PerFactionCount.Keys)
+                //    {
+                //        if (PerFactionCount[factionId][1] == 0)
+                //            continue;
+                //        IMyFaction faction = MyAPIGateway.Session.Factions.TryGetFactionById(factionId);
+                //        if (faction == null)
+                //            continue;
 
-                        foreach (var member in faction.Members)
-                        {
-                            IMyPlayer player = players.FirstOrDefault(x => x.IdentityId == member.Key);
-                            if (player == null)
-                                continue;
-                            SyncPacket pckOut = new SyncPacket();
-                            pckOut.proto = SyncPacket.Version;
-                            pckOut.command = (ushort)Command.MessageToChat;
-                            pckOut.message = string.Format("Removed {0} entity as a result of limitations on the amount {1} per faction.", PerFactionCount[factionId][1], Settings.LimitPerFaction);
-                            Core.SendMessage(pckOut, player.SteamUserId);
-                        }
-                    }
+                //        foreach (var member in faction.Members)
+                //        {
+                //            IMyPlayer player = players.FirstOrDefault(x => x.IdentityId == member.Key);
+                //            if (player == null)
+                //                continue;
+                //            SyncPacket pckOut = new SyncPacket();
+                //            pckOut.proto = SyncPacket.Version;
+                //            pckOut.command = (ushort)Command.MessageToChat;
+                //            pckOut.message = string.Format("Removed {0} entity as a result of limitations on the amount {1} per faction.", PerFactionCount[factionId][1], Settings.LimitPerFaction);
+                //            Core.SendMessage(pckOut, player.SteamUserId);
+                //        }
+                //    }
 
-                    if (removed > 0)
-                        Logger.Log.Info("Cleaning, totaly removed {0} entities.", removed);
-                }
-                #endregion Cleanup
+                //    if (removed > 0)
+                //        Logger.Log.Info("Cleaning, totaly removed {0} entities.", removed);
+                //}
+                //#endregion Cleanup
             }
             catch (Exception ex)
             {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace JimLess
+namespace Douxt
 {
     [Serializable]
     public class Settings

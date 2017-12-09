@@ -2,7 +2,7 @@
 using System;
 using System.Text;
 
-namespace JimLess
+namespace Douxt
 {
     public class Logger
     {

@@ -7,7 +7,7 @@ using VRage.Game.ModAPI;
 using VRage.Library.Utils;
 using VRageMath;
 
-namespace JimLess
+namespace Douxt
 {
     class BuildHandler
     {

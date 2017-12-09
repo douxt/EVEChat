@@ -4,7 +4,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 
-namespace JimLess
+namespace Douxt
 {
     public class Sync
     {

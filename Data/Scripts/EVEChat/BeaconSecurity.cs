@@ -1,4 +1,5 @@
 ﻿using Sandbox.Common.ObjectBuilders;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
@@ -6,12 +7,13 @@ using System;
 using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRageMath;
 
-namespace JimLess
+namespace Douxt
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Beacon), false)]
     public class BeaconSecurity : MyGameLogicComponent
@@ -141,7 +143,7 @@ namespace JimLess
                         MyEntity entity = player.Controller.ControlledEntity.Entity as MyEntity;
                         if (entity.HasInventory)
                         {
-                            inventory = entity.GetInventoryBase() as MyInventory;
+                            MyInventory inventory = entity.GetInventoryBase() as MyInventory;
 
                             if (!inventory.ContainItems(10000, new MyObjectBuilder_Ingot { SubtypeName = "Coin" }))
                             {
