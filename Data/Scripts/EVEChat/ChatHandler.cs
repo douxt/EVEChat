@@ -25,6 +25,14 @@ namespace Douxt
 
 
 PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组件建造自己的黑店。
+
+输入/eve help获取更多信息。
+";
+
+        private static readonly string EVEHELP2 = @"命令：
+/eve help               显示本页信息。
+/eve config             显示服务器配置信息。
+/eve set num value      将num号配置值设置为value
 ";
         private static readonly string BSHELP_CHAT = @"/bs help [1-10], /bs config, /bs set number/name value,  /bs on/off, /bs debug, /bs list/find/add/rem/clear/buildon";
         private static readonly List<string> BSHELP_VARIABLES = new List<string>() {
@@ -50,7 +58,8 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
             {
                 if (messageText.Length == 4)
                 {
-                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("欢迎来到EVE服务器！输入/eve help获取帮助。"));
+                    MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP);
+                    //MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("欢迎来到EVE服务器！输入/eve help获取帮助。"));
                 }
                 string[] commands = (messageText.Remove(0, 4)).Split(null as string[], 2, StringSplitOptions.RemoveEmptyEntries);
                 if (commands.Length > 0)
@@ -67,7 +76,7 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                         catch { }
                         if (index < 1 || index > 10)
                         {
-                            MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP);
+                            MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP2);
                             //MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, BSHELP_CHAT);
                         }
                         else
@@ -79,27 +88,40 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                     }
                     else if (Core.Settings != null)
                     {
-
                         if (internalCommand.Equals("redeem", StringComparison.OrdinalIgnoreCase))
                         {
-                            var index = 0;
+                            sendToOthers = false;
 
-                            if (arguments.Length == 0) {
+                            if (arguments.Length == 0)
+                            {
+                                return;
+                            }
+
+                            if (Core.Settings.RedeemedCodes.Contains(arguments)) {
+                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("已经被兑换！"));
                                 return;
                             }
 
                             string t = arguments.Replace("-", "");
                             byte[] data2 = Base24Encoding.Default.GetBytes(t);
+                            if (data2 == null)
+                            {
+                                return;
+                            }
                             String str = System.Text.Encoding.ASCII.GetString(data2);
                             str = str.TrimStart('\0');
-
-                            string[] msgs = str.Split(":", StringSplitOptions.RemoveEmptyEntries);
-                            if (msgs.Length != 3) {
+                            string[] sep = {":" };
+                            string[] msgs = str.Split(sep, 4,StringSplitOptions.RemoveEmptyEntries);
+                            if (msgs.Length != 4)
+                            {
                                 return;
                             }
 
+                
+
                             string type = msgs[0];
-                            if (type.Equals("Coin", StringComparison.OrdinalIgnoreCase)) {
+                            if (type.Equals("Coin", StringComparison.OrdinalIgnoreCase))
+                            {
                                 var num = 0;
                                 try { num = Int32.Parse(msgs[1]); } catch { }
 
@@ -107,12 +129,42 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                                 {
                                     return;
                                 }
+                                var sum = 0;
+                                try { sum = Int32.Parse(msgs[3]); } catch { }
+
+                                string content = msgs[0] + ":" + msgs[1] + ":" + msgs[2];
+
+                                var sum2 = 0;
+                                foreach (char c in content)
+                                {
+                                    sum2 += (int)c;
+                                }
+                                sum2 = sum2 % 100;
+                                if (sum2 != sum)
+                                {
+                                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换码错误！"));
+                                    return;
+                                }
+
+
                                 MyEntity entity = MyAPIGateway.Session.Player.Character.Entity as MyEntity;
                                 if (entity.HasInventory)
                                 {
                                     MyInventory inventory = entity.GetInventoryBase() as MyInventory;
-                                    
+
                                     inventory.AddItems(num, new MyObjectBuilder_Ingot { SubtypeName = "Coin" });
+
+                                    Core.Settings.RedeemedCodes.Add(arguments);
+
+                                    Core.SendSettingsToServer(Core.Settings, MyAPIGateway.Session.Player.SteamUserId);
+
+                                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换成功！"));
+
+                                    SyncPacket newpacket = new SyncPacket();
+                                    newpacket.proto = SyncPacket.Version;
+                                    newpacket.command = (ushort)Command.MessageToChat;
+                                    newpacket.message = "Code Redeemed.";
+                                    Core.SendMessage(newpacket); // send to others
                                     //if (!inventory.ContainItems(100000, new MyObjectBuilder_Ingot { SubtypeName = "Iron" }))
                                     //{
                                     //    inventory.AddItems(index, new MyObjectBuilder_Ingot { SubtypeName = "Iron" });
@@ -143,29 +195,17 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                         if (internalCommand.Equals("config", StringComparison.OrdinalIgnoreCase))
                         {
                             #region config
-                            MyAPIGateway.Utilities.ShowMissionScreen("Config", "Beacon ", "Security", String.Format(@"1) 打开前的延迟时间(0-3600,D:120) = {0}
-2) 打开前的距离(0-10000,D:400) = {1}
-3) 仅限于站点(on/off,D:off) = {2}
-4) 只有零速(on/off,D:on) = {3}
-5) 建筑不允许(on/off,D:on) = {4}
-6) 坚不可摧建造(on/off,D:on) = {5}
-7) 坚不可摧的研磨所有者(on/off,D:on) = {6}
-8) 限制网格大小(0-1000,D:150) = {7}
-9) 限制每个阵营(1-100,D:30) = {8}
-10) 每人限制(1-100,D:3) = {9}
-11) 清洗频率(0-3600,D:5) = {10}
+                            MyAPIGateway.Utilities.ShowMissionScreen("配置", "EVE-PVP", "服务器", String.Format(@"1) 每分钟工资(0-10000,D:60) = {0}
+2) 工资累积上限(0-50000,D:10000) = {1}
+3) 每分钟基础资源(0-50000,D:300) = {2}
+4) 资源累积上限(0-50000,D:20000) = {3}
+5) 每在线玩家每分钟资源加成(0-50000,D:150) = {4}
 ",
-    Core.Settings.DelayBeforeTurningOn,
-    Core.Settings.DistanceBeforeTurningOn,
-    Core.Settings.OnlyForStations,
-    Core.Settings.OnlyWithZeroSpeed,
-    Core.Settings.BuildingNotAllowed,
-    Core.Settings.IndestructibleNoBuilds,
-    Core.Settings.IndestructibleGrindOwner,
-    Core.Settings.LimitGridSizes,
-    Core.Settings.LimitPerFaction,
-    Core.Settings.LimitPerPlayer,
-    Core.Settings.CleaningFrequency
+    Core.Settings.SalaryPerMinute,
+    Core.Settings.SalaryMax,
+    Core.Settings.ResourcePerMinute,
+    Core.Settings.ResourceMax,
+    Core.Settings.ResourceIncreasePerPlayerMinute
     ));
                             #endregion config
                         }
@@ -458,20 +498,21 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                                 if (argument.Length >= 2)
                                 {
                                     bool changed = false;
-                                    if (argument[0].Equals("1") || argument[0].Equals("DelayBeforeTurningOn", StringComparison.OrdinalIgnoreCase))
+
+                                    if (argument[0].Equals("1") || argument[0].Equals("SalaryPerMinute", StringComparison.OrdinalIgnoreCase))
                                     {
                                         try
                                         {
                                             ushort value = UInt16.Parse(argument[1]);
-                                            if (value < 0 || value > 3600)
+                                            if (value < 0 || value > 10000)
                                             {
-                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("The value is not within the allowed limits. [ 0 - 3600 ]", value));
+                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("非法值. [ 0 - 10000 ]", value));
                                             }
                                             else
                                             {
-                                                Core.Settings.DelayBeforeTurningOn = value;
+                                                Core.Settings.SalaryPerMinute = value;
                                                 changed = true;
-                                                ResultMessage = string.Format("DelayBeforeTurningOn changed to {0}", value);
+                                                ResultMessage = string.Format("SalaryPerMinute changed to {0}", value);
                                             }
                                         }
                                         catch (Exception ex)
@@ -479,20 +520,20 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                                             MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
                                         }
                                     }
-                                    else if (argument[0].Equals("2") || argument[0].Equals("DistanceBeforeTurningOn", StringComparison.OrdinalIgnoreCase))
+                                    else if (argument[0].Equals("2") || argument[0].Equals("SalaryMax", StringComparison.OrdinalIgnoreCase))
                                     {
                                         try
                                         {
                                             ushort value = UInt16.Parse(argument[1]);
-                                            if (value < 0 || value > 10000)
+                                            if (value < 0 || value > 50000)
                                             {
-                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("The value is not within the allowed limits. [ 0 - 10000 ]", value));
+                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("非法值. [ 0 - 50000 ]", value));
                                             }
                                             else
                                             {
-                                                Core.Settings.DistanceBeforeTurningOn = value;
+                                                Core.Settings.SalaryMax = value;
                                                 changed = true;
-                                                ResultMessage = string.Format("DistanceBeforeTurningOn changed to {0}", value);
+                                                ResultMessage = string.Format("SalaryMax changed to {0}", value);
 
                                             }
                                         }
@@ -501,48 +542,158 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                                             MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
                                         }
                                     }
-                                    else if (argument[0].Equals("3") || argument[0].Equals("OnlyForStations", StringComparison.OrdinalIgnoreCase))
+                                    else if (argument[0].Equals("3") || argument[0].Equals("ResourcePerMinute", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                        try
                                         {
-                                            Core.Settings.OnlyForStations = true;
-                                            changed = true;
+                                            ushort value = UInt16.Parse(argument[1]);
+                                            if (value < 0 || value > 50000)
+                                            {
+                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("非法值. [ 0 - 50000 ]", value));
+                                            }
+                                            else
+                                            {
+                                                Core.Settings.ResourcePerMinute = value;
+                                                changed = true;
+                                                ResultMessage = string.Format("ResourcePerMinute changed to {0}", value);
+
+                                            }
                                         }
-                                        else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                        catch (Exception ex)
                                         {
-                                            Core.Settings.OnlyForStations = false;
-                                            changed = true;
+                                            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
                                         }
-                                        ResultMessage = string.Format("OnlyForStations changed to {0}", (Core.Settings.OnlyForStations) ? "On" : "Off");
                                     }
-                                    else if (argument[0].Equals("4") || argument[0].Equals("OnlyWithZeroSpeed", StringComparison.OrdinalIgnoreCase))
+                                    else if (argument[0].Equals("4") || argument[0].Equals("ResourceMax", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                        try
                                         {
-                                            Core.Settings.OnlyWithZeroSpeed = true;
-                                            changed = true;
+                                            ushort value = UInt16.Parse(argument[1]);
+                                            if (value < 0 || value > 50000)
+                                            {
+                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("非法值. [ 0 - 50000 ]", value));
+                                            }
+                                            else
+                                            {
+                                                Core.Settings.ResourceMax = value;
+                                                changed = true;
+                                                ResultMessage = string.Format("ResourceMax changed to {0}", value);
+
+                                            }
                                         }
-                                        else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                        catch (Exception ex)
                                         {
-                                            Core.Settings.OnlyWithZeroSpeed = false;
-                                            changed = true;
+                                            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
                                         }
-                                        ResultMessage = string.Format("OnlyWithZeroSpeed changed to {0}", (Core.Settings.OnlyWithZeroSpeed) ? "On" : "Off");
                                     }
-                                    else if (argument[0].Equals("5") || argument[0].Equals("BuildingNotAllowed", StringComparison.OrdinalIgnoreCase))
+                                    else if (argument[0].Equals("5") || argument[0].Equals("ResourceIncreasePerPlayerMinute", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                        try
                                         {
-                                            Core.Settings.BuildingNotAllowed = true;
-                                            changed = true;
+                                            ushort value = UInt16.Parse(argument[1]);
+                                            if (value < 0 || value > 50000)
+                                            {
+                                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("非法值. [ 0 - 50000 ]", value));
+                                            }
+                                            else
+                                            {
+                                                Core.Settings.ResourceIncreasePerPlayerMinute = value;
+                                                changed = true;
+                                                ResultMessage = string.Format("ResourceIncreasePerPlayerMinute changed to {0}", value);
+
+                                            }
                                         }
-                                        else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                        catch (Exception ex)
                                         {
-                                            Core.Settings.BuildingNotAllowed = false;
-                                            changed = true;
+                                            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
                                         }
-                                        ResultMessage = string.Format("BuildingNotAllowed changed to {0}", (Core.Settings.BuildingNotAllowed) ? "On" : "Off");
                                     }
+
+                                    //if (argument[0].Equals("1") || argument[0].Equals("DelayBeforeTurningOn", StringComparison.OrdinalIgnoreCase))
+                                    //{
+                                    //    try
+                                    //    {
+                                    //        ushort value = UInt16.Parse(argument[1]);
+                                    //        if (value < 0 || value > 3600)
+                                    //        {
+                                    //            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("The value is not within the allowed limits. [ 0 - 3600 ]", value));
+                                    //        }
+                                    //        else
+                                    //        {
+                                    //            Core.Settings.DelayBeforeTurningOn = value;
+                                    //            changed = true;
+                                    //            ResultMessage = string.Format("DelayBeforeTurningOn changed to {0}", value);
+                                    //        }
+                                    //    }
+                                    //    catch (Exception ex)
+                                    //    {
+                                    //        MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
+                                    //    }
+                                    //}
+                                    //else if (argument[0].Equals("2") || argument[0].Equals("DistanceBeforeTurningOn", StringComparison.OrdinalIgnoreCase))
+                                    //{
+                                    //    try
+                                    //    {
+                                    //        ushort value = UInt16.Parse(argument[1]);
+                                    //        if (value < 0 || value > 10000)
+                                    //        {
+                                    //            MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("The value is not within the allowed limits. [ 0 - 10000 ]", value));
+                                    //        }
+                                    //        else
+                                    //        {
+                                    //            Core.Settings.DistanceBeforeTurningOn = value;
+                                    //            changed = true;
+                                    //            ResultMessage = string.Format("DistanceBeforeTurningOn changed to {0}", value);
+
+                                    //        }
+                                    //    }
+                                    //    catch (Exception ex)
+                                    //    {
+                                    //        MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, string.Format("Incorrect number. {0}", ex.Message));
+                                    //    }
+                                    //}
+                                    //else if (argument[0].Equals("3") || argument[0].Equals("OnlyForStations", StringComparison.OrdinalIgnoreCase))
+                                    //{
+                                    //    if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.OnlyForStations = true;
+                                    //        changed = true;
+                                    //    }
+                                    //    else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.OnlyForStations = false;
+                                    //        changed = true;
+                                    //    }
+                                    //    ResultMessage = string.Format("OnlyForStations changed to {0}", (Core.Settings.OnlyForStations) ? "On" : "Off");
+                                    //}
+                                    //else if (argument[0].Equals("4") || argument[0].Equals("OnlyWithZeroSpeed", StringComparison.OrdinalIgnoreCase))
+                                    //{
+                                    //    if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.OnlyWithZeroSpeed = true;
+                                    //        changed = true;
+                                    //    }
+                                    //    else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.OnlyWithZeroSpeed = false;
+                                    //        changed = true;
+                                    //    }
+                                    //    ResultMessage = string.Format("OnlyWithZeroSpeed changed to {0}", (Core.Settings.OnlyWithZeroSpeed) ? "On" : "Off");
+                                    //}
+                                    //else if (argument[0].Equals("5") || argument[0].Equals("BuildingNotAllowed", StringComparison.OrdinalIgnoreCase))
+                                    //{
+                                    //    if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.BuildingNotAllowed = true;
+                                    //        changed = true;
+                                    //    }
+                                    //    else if (argument[1].Equals("off", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("false", StringComparison.OrdinalIgnoreCase))
+                                    //    {
+                                    //        Core.Settings.BuildingNotAllowed = false;
+                                    //        changed = true;
+                                    //    }
+                                    //    ResultMessage = string.Format("BuildingNotAllowed changed to {0}", (Core.Settings.BuildingNotAllowed) ? "On" : "Off");
+                                    //}
                                     else if (argument[0].Equals("6") || argument[0].Equals("IndestructibleNoBuilds", StringComparison.OrdinalIgnoreCase))
                                     {
                                         if (argument[1].Equals("on", StringComparison.OrdinalIgnoreCase) || argument[1].Equals("true", StringComparison.OrdinalIgnoreCase))

@@ -87,58 +87,12 @@ namespace Douxt
                         }
                     case Command.SyncOff:
                         {
-                            IMyEntity entity;
-                            MyAPIGateway.Entities.TryGetEntityById(pckIn.entityId, out entity);
-                            if (entity == null)
-                                break;
 
-                            Logger.Log.Debug("SyncOff found entity id {0}", pckIn.entityId);
-                            BeaconSecurity bs = entity.GameLogic as BeaconSecurity;
-                            if (bs == null || !bs.IsBeaconSecurity)
-                                break;
-
-                            Logger.Log.Debug(" * entity is BeaconSecurity");
-                            if (entity is IMyFunctionalBlock)
-                                (entity as IMyFunctionalBlock).Enabled = false;
-                            //    (entity as IMyFunctionalBlock).RequestEnable(false);
-
-                            IMyPlayer player = MyAPIGateway.Session.Player;
-                            if (player != null) // check this for dedicated servers
-                            {
-                                MyRelationsBetweenPlayerAndBlock relation = (entity as IMyFunctionalBlock).GetUserRelationToOwner(player.IdentityId);
-                                if (relation == MyRelationsBetweenPlayerAndBlock.Owner || relation == MyRelationsBetweenPlayerAndBlock.FactionShare)
-                                {  // if player has rights to this beacon, show message
-                                    MyAPIGateway.Utilities.ShowNotification(string.Format("{0} 名称为 '{1}' 的安全信标现在已停用!", (relation == MyRelationsBetweenPlayerAndBlock.FactionShare) ? "派系" : "你的", (entity.GameLogic as BeaconSecurity).DisplayName), 5000, MyFontEnum.Red);
-                                }
-                            }
                             break;
                         }
                     case Command.SyncOn:
                         {
-                            IMyEntity entity;
-                            MyAPIGateway.Entities.TryGetEntityById(pckIn.entityId, out entity);
-                            if (entity == null)
-                                break;
 
-                            Logger.Log.Debug("SyncOn found entity id {0}", pckIn.entityId);
-                            BeaconSecurity bs = entity.GameLogic as BeaconSecurity;
-                            if (bs == null || !bs.IsBeaconSecurity)
-                                break;
-
-                            Logger.Log.Debug(" * entity is BeaconSecurity");
-                            if (entity is IMyFunctionalBlock)
-                                (entity as IMyFunctionalBlock).Enabled = true;
-                            //    (entity as IMyFunctionalBlock).RequestEnable(true);
-
-                            IMyPlayer player = MyAPIGateway.Session.Player;
-                            if (player != null) // check this for dedicated servers
-                            {
-                                MyRelationsBetweenPlayerAndBlock relation = (entity as IMyFunctionalBlock).GetUserRelationToOwner(player.IdentityId);
-                                if (relation == MyRelationsBetweenPlayerAndBlock.Owner || relation == MyRelationsBetweenPlayerAndBlock.FactionShare)
-                                {  // if player has rights to this beacon, show message
-                                    MyAPIGateway.Utilities.ShowNotification(string.Format("{0} 名称为 '{1}' 的信标安全现在被激活!", (relation == MyRelationsBetweenPlayerAndBlock.FactionShare) ? "派系" : "你的", (entity.GameLogic as BeaconSecurity).DisplayName), 5000, MyFontEnum.Green);
-                                }
-                            }
                             break;
                         }
                     default:

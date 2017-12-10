@@ -6,6 +6,11 @@ namespace Douxt
     [Serializable]
     public class Settings
     {
+        public ushort SalaryPerMinute = 60;
+        public ushort SalaryMax = 10000;
+        public ushort ResourcePerMinute = 300;
+        public ushort ResourceMax = 20000;
+        public ushort ResourceIncreasePerPlayerMinute = 150;
         public bool Enabled = true;
         public bool Debug = false;
         public ushort CleaningFrequency = 5;
@@ -23,6 +28,7 @@ namespace Douxt
         public List<long> Indestructible = new List<long>();
         public List<long> IndestructibleOverrideBuilds = new List<long>();
         public List<long> IndestructibleOverrideGrindOwner = new List<long>();
+        public List<string> RedeemedCodes = new List<string>();
     }
 
 }
