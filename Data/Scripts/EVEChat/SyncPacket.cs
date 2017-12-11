@@ -7,12 +7,13 @@ namespace Douxt
         SettingsChange,
         SyncOn,
         SyncOff,
-        MessageToChat
+        MessageToChat,
+        Redeem
     }
 
     public struct SyncPacket
     {
-        public static readonly ushort SyncPacketID = (1 << 13) + 224;
+        public static readonly ushort SyncPacketID = (1 << 13) + 111;
         public static readonly int Version = SyncPacketID + 0x0001;
 
         /// <summary>

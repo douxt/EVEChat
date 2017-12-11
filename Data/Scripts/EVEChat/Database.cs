@@ -15,7 +15,8 @@ namespace Douxt
         /// </summary>
         private Dictionary<string, string> m_databaseIndexes = new Dictionary<string, string>()
         {
-            {"settings", "settings.xml"}
+            {"settings", "settings.xml"},
+            {"codes", "codes.xml"}
         };
 
         public void Init()

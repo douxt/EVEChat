@@ -23,6 +23,9 @@ namespace Douxt
         public static Settings Settings { get; private set; }
         internal static void setSettings(Settings settings) { Settings = settings; Flush(); }
 
+        public static Codes Codes { get; private set; }
+        internal static void setCodes(Codes codes) { Codes = codes; FlushCodes(); }
+
         public static bool Inited { get; private set; }
         public static bool IsServer { get; private set; }
 
@@ -97,12 +100,29 @@ namespace Douxt
             }
         }
 
+        void GetCodes() {
+            if (IsServer)
+            {   // Server side, get from local drive
+                Logger.Log.Info("Server redeemed codes");
+                if ((Codes = Database.Instance.GetData<Codes>("codes", typeof(Codes))) == null)
+                    Codes = new Codes();
+            }
+        }
+
         private static void Flush()
         {
             if (!IsServer || Settings == null)
                 return;
 
             Database.Instance.SetData<Settings>("settings", typeof(Settings), Settings);
+        }
+
+        private static void FlushCodes()
+        {
+            if (!IsServer || Codes == null)
+                return;
+
+            Database.Instance.SetData<Codes>("codes", typeof(Codes), Codes);
         }
 
         protected override void UnloadData()
@@ -137,8 +157,11 @@ namespace Douxt
                 if (!IsServer)  // if client exit at this point. Cleaning works only on server side.
                     return;
 
+                if (Codes == null)
+                    GetCodes();
+
                 Frame = frameShift++;
-                if (Frame % 360 != 0)
+                if (Frame % 3600 != 0)
                 {
                     return;
                 }
@@ -200,6 +223,16 @@ namespace Douxt
             return (client != null && client.IsAdmin);
         }
 
+        public static IMyPlayer GetPlayer(ulong SteamUserId)
+        {
+            List<IMyPlayer> players = new List<IMyPlayer>();
+            MyAPIGateway.Players.GetPlayers(players, x => x.SteamUserId == SteamUserId);
+            if (players.Count > 0) {
+                return players[0];
+            }
+            return null;
+        }
+
 
         public static void SendSettingsToServer(Settings settings, ulong steamId)
         {
@@ -209,6 +242,18 @@ namespace Douxt
             newpacket.command = (ushort)Command.SettingsChange;
             newpacket.steamId = steamId;
             newpacket.settings = settings;
+            SendMessageToServer(newpacket); // send only to server
+        }
+
+        public static void SendCodeToServer(string code, ulong steamId)
+        {
+            SyncPacket newpacket = new SyncPacket();
+            newpacket.proto = SyncPacket.Version;
+            newpacket.request = false;
+            newpacket.command = (ushort)Command.Redeem;
+            newpacket.steamId = steamId;
+            newpacket.message = code;
+            //newpacket.settings = settings;
             SendMessageToServer(newpacket); // send only to server
         }
 

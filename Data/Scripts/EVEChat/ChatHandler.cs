@@ -33,6 +33,7 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
 /eve help               显示本页信息。
 /eve config             显示服务器配置信息。
 /eve set num value      将num号配置值设置为value
+/eve redeem code        使用兑换码code兑换奖励
 ";
         private static readonly string BSHELP_CHAT = @"/bs help [1-10], /bs config, /bs set number/name value,  /bs on/off, /bs debug, /bs list/find/add/rem/clear/buildon";
         private static readonly List<string> BSHELP_VARIABLES = new List<string>() {
@@ -90,6 +91,8 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                     {
                         if (internalCommand.Equals("redeem", StringComparison.OrdinalIgnoreCase))
                         {
+                            //兑换码，应该发消息给服务器端，让服务器端处理。
+
                             sendToOthers = false;
 
                             if (arguments.Length == 0)
@@ -97,81 +100,94 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                                 return;
                             }
 
-                            if (Core.Settings.RedeemedCodes.Contains(arguments)) {
-                                MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("已经被兑换！"));
-                                return;
-                            }
+                            Core.SendCodeToServer(arguments, MyAPIGateway.Session.Player.SteamUserId);
 
-                            string t = arguments.Replace("-", "");
-                            byte[] data2 = Base24Encoding.Default.GetBytes(t);
-                            if (data2 == null)
-                            {
-                                return;
-                            }
-                            String str = System.Text.Encoding.ASCII.GetString(data2);
-                            str = str.TrimStart('\0');
-                            string[] sep = {":" };
-                            string[] msgs = str.Split(sep, 4,StringSplitOptions.RemoveEmptyEntries);
-                            if (msgs.Length != 4)
-                            {
-                                return;
-                            }
+
+                            //SyncPacket newpacket = new SyncPacket();
+                            //newpacket.request = false;
+                            //newpacket.proto = SyncPacket.Version;
+                            //newpacket.command = (ushort)Command.Redeem;
+                            //newpacket.message = arguments;
+                            //newpacket.steamId = MyAPIGateway.Session.Player.SteamUserId;
+                            ////newpacket.steamId = MyAPIGateway.Session.Player.SteamUserId;
+                            //Core.SendMessage(newpacket); // send to others
+                            return;
+
+                            //if (Core.Settings.RedeemedCodes.Contains(arguments)) {
+                            //    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("已经被兑换！"));
+                            //    return;
+                            //}
+
+                            //string t = arguments.Replace("-", "");
+                            //byte[] data2 = Base24Encoding.Default.GetBytes(t);
+                            //if (data2 == null)
+                            //{
+                            //    return;
+                            //}
+                            //String str = System.Text.Encoding.ASCII.GetString(data2);
+                            //str = str.TrimStart('\0');
+                            //string[] sep = {":" };
+                            //string[] msgs = str.Split(sep, 4,StringSplitOptions.RemoveEmptyEntries);
+                            //if (msgs.Length != 4)
+                            //{
+                            //    return;
+                            //}
 
                 
 
-                            string type = msgs[0];
-                            if (type.Equals("Coin", StringComparison.OrdinalIgnoreCase))
-                            {
-                                var num = 0;
-                                try { num = Int32.Parse(msgs[1]); } catch { }
+                            //string type = msgs[0];
+                            //if (type.Equals("Coin", StringComparison.OrdinalIgnoreCase))
+                            //{
+                            //    var num = 0;
+                            //    try { num = Int32.Parse(msgs[1]); } catch { }
 
-                                if (num == 0)
-                                {
-                                    return;
-                                }
-                                var sum = 0;
-                                try { sum = Int32.Parse(msgs[3]); } catch { }
+                            //    if (num == 0)
+                            //    {
+                            //        return;
+                            //    }
+                            //    var sum = 0;
+                            //    try { sum = Int32.Parse(msgs[3]); } catch { }
 
-                                string content = msgs[0] + ":" + msgs[1] + ":" + msgs[2];
+                            //    string content = msgs[0] + ":" + msgs[1] + ":" + msgs[2];
 
-                                var sum2 = 0;
-                                foreach (char c in content)
-                                {
-                                    sum2 += (int)c;
-                                }
-                                sum2 = sum2 % 100;
-                                if (sum2 != sum)
-                                {
-                                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换码错误！"));
-                                    return;
-                                }
+                            //    var sum2 = 0;
+                            //    foreach (char c in content)
+                            //    {
+                            //        sum2 += (int)c;
+                            //    }
+                            //    sum2 = sum2 % 100;
+                            //    if (sum2 != sum)
+                            //    {
+                            //        MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换码错误！"));
+                            //        return;
+                            //    }
 
 
-                                MyEntity entity = MyAPIGateway.Session.Player.Character.Entity as MyEntity;
-                                if (entity.HasInventory)
-                                {
-                                    MyInventory inventory = entity.GetInventoryBase() as MyInventory;
+                            //    MyEntity entity = MyAPIGateway.Session.Player.Character.Entity as MyEntity;
+                            //    if (entity.HasInventory)
+                            //    {
+                            //        MyInventory inventory = entity.GetInventoryBase() as MyInventory;
 
-                                    inventory.AddItems(num, new MyObjectBuilder_Ingot { SubtypeName = "Coin" });
+                            //        inventory.AddItems(num, new MyObjectBuilder_Ingot { SubtypeName = "Coin" });
 
-                                    Core.Settings.RedeemedCodes.Add(arguments);
+                            //        Core.Settings.RedeemedCodes.Add(arguments);
 
-                                    Core.SendSettingsToServer(Core.Settings, MyAPIGateway.Session.Player.SteamUserId);
+                            //        Core.SendSettingsToServer(Core.Settings, MyAPIGateway.Session.Player.SteamUserId);
 
-                                    MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换成功！"));
+                            //        MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("兑换成功！"));
 
-                                    SyncPacket newpacket = new SyncPacket();
-                                    newpacket.proto = SyncPacket.Version;
-                                    newpacket.command = (ushort)Command.MessageToChat;
-                                    newpacket.message = "Code Redeemed.";
-                                    Core.SendMessage(newpacket); // send to others
-                                    //if (!inventory.ContainItems(100000, new MyObjectBuilder_Ingot { SubtypeName = "Iron" }))
-                                    //{
-                                    //    inventory.AddItems(index, new MyObjectBuilder_Ingot { SubtypeName = "Iron" });
-                                    //    //terminalBlock.RefreshCustomInfo();
-                                    //}
-                                }
-                            }
+                            //        //SyncPacket newpacket = new SyncPacket();
+                            //        //newpacket.proto = SyncPacket.Version;
+                            //        //newpacket.command = (ushort)Command.MessageToChat;
+                            //        //newpacket.message = "Code Redeemed.";
+                            //        //Core.SendMessage(newpacket); // send to others
+                            //        //if (!inventory.ContainItems(100000, new MyObjectBuilder_Ingot { SubtypeName = "Iron" }))
+                            //        //{
+                            //        //    inventory.AddItems(index, new MyObjectBuilder_Ingot { SubtypeName = "Iron" });
+                            //        //    //terminalBlock.RefreshCustomInfo();
+                            //        //}
+                            //    }
+                            //}
 
                             //if (index > 0)
                             //{
