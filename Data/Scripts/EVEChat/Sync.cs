@@ -90,6 +90,7 @@ namespace Douxt
                                         {
                                             sum2 += (int)c;
                                         }
+                                        sum2++;
                                         sum2 = sum2 % 100;
                                         if (sum2 != sum)
                                         {

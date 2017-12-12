@@ -17,14 +17,13 @@ namespace Douxt
         private static readonly string EVEHELP = @"欢迎!请加QQ群：116381172  以便和大家一起玩！
 
 本服务器的基本玩法：
-1.获取资源：只要在线玩家背包就会发放少量小凡币。资源点信标处会产生大量小凡币，而且在线人数越多，产生速度越快。
+1.获取资源：只要在线玩家背包就会发放少量小凡币。打狗蜘蛛等生物会掉落补给箱，骰子，小凡币。
 
-2.建造船只：用小凡币在黑店购买组件，即可建造船只，推荐在隐蔽的小行星建造自己的基地!
+2.生产物资：补给箱放到黑店产出栏可以自动兑换为矿物，也可以用小凡币在黑店购买矿锭，骰子在神秘商店产出栏可以兑换为随机组件。
 
-3.搞事情：直接用日不完重生船或者自己造的船出去搞事情或者约战，请自行发挥！
+3.探索T级科技：自行发现T级物品的获取方式，换上T级装备。
 
-
-PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组件建造自己的黑店。
+PS：狼的补给箱不掉落铂金，铂金需要去打蜘蛛。
 
 输入/eve help获取更多信息。
 ";
@@ -59,7 +58,7 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
             {
                 if (messageText.Length == 4)
                 {
-                    MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP);
+                    MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-X", "服务器", EVEHELP);
                     //MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, String.Format("欢迎来到EVE服务器！输入/eve help获取帮助。"));
                 }
                 string[] commands = (messageText.Remove(0, 4)).Split(null as string[], 2, StringSplitOptions.RemoveEmptyEntries);
@@ -77,7 +76,7 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                         catch { }
                         if (index < 1 || index > 10)
                         {
-                            MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-PVP", "服务器", EVEHELP2);
+                            MyAPIGateway.Utilities.ShowMissionScreen("帮助", "EVE-X", "服务器", EVEHELP2);
                             //MyAPIGateway.Utilities.ShowMessage(Core.MODSAY, BSHELP_CHAT);
                         }
                         else
@@ -211,7 +210,7 @@ PS：南北据点有公共黑店，黑店出售小凡组件，可以用小凡组
                         if (internalCommand.Equals("config", StringComparison.OrdinalIgnoreCase))
                         {
                             #region config
-                            MyAPIGateway.Utilities.ShowMissionScreen("配置", "EVE-PVP", "服务器", String.Format(@"1) 每分钟工资(0-10000,D:60) = {0}
+                            MyAPIGateway.Utilities.ShowMissionScreen("配置", "EVE-X", "服务器", String.Format(@"1) 每分钟工资(0-10000,D:60) = {0}
 2) 工资累积上限(0-50000,D:10000) = {1}
 3) 每分钟基础资源(0-50000,D:300) = {2}
 4) 资源累积上限(0-50000,D:20000) = {3}
